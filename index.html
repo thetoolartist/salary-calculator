@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Inventyv Salary Calculator</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+.confetti {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 1;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+@keyframes blast {
+  0% {
+    transform: translate(0,0) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--x), var(--y)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+</style>
+
+
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+
+<div class="bg-white shadow-xl rounded-2xl w-full max-w-5xl p-8">
+
+<!-- HEADER -->
+<h1 class="text-4xl font-extrabold text-center mb-8 flex items-center justify-center gap-3">
+
+<span class="text-3xl">🤑</span>
+
+<span class="text-transparent bg-clip-text
+bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500
+drop-shadow-lg">
+
+Inventyv Salary & Allowance Calculator
+
+</span>
+
+<span class="text-3xl">💸</span>
+
+</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+<!-- INPUT SECTION -->
+<div class="border rounded-xl p-6 bg-gray-50">
+
+<h2 class="text-xl font-semibold mb-6 text-blue-700">
+Employee Input Details
+</h2>
+
+<div class="space-y-5">
+
+<!-- Salary -->
+<div>
+<label class="block font-medium mb-1">Enter Your Full Salary</label>
+<input type="number" id="fullSalary"
+class="w-full p-2 border rounded-lg bg-sky-100">
+</div>
+
+<!-- Days -->
+<div>
+<label class="block font-medium mb-1">Select Total Days in Month</label>
+<select id="daysInMonth"
+class="w-full p-2 border rounded-lg bg-sky-100">
+
+<option value="">Select</option>
+<option>28</option>
+<option>29</option>
+<option>30</option>
+<option>31</option>
+
+</select>
+</div>
+
+<!-- LOP -->
+<div>
+<label class="block font-medium mb-1">Enter LOP (Leave Without Pay)</label>
+<input type="number" id="lopDays"
+class="w-full p-2 border rounded-lg bg-sky-100">
+</div>
+
+<!-- Sunday -->
+<div>
+<label class="block font-medium mb-1">
+Enter Sunday / Holiday Worked
+</label>
+
+<input type="number" id="sundayDays"
+class="w-full p-2 border rounded-lg bg-sky-100">
+</div>
+
+
+<!-- CHECKBOXES -->
+<div class="space-y-2 pt-2">
+
+<div class="flex gap-2 items-center">
+<input type="checkbox" id="nightApplicable"
+class="w-5 h-5" onchange="toggleNight()">
+
+<label class="font-medium">
+Night Shift Applicable
+</label>
+</div>
+
+<div class="flex gap-2 items-center">
+<input type="checkbox" id="saturdayApplicable"
+class="w-5 h-5" onchange="toggleSaturday()">
+
+<label class="font-medium">
+Saturday Allowance Applicable
+</label>
+</div>
+
+</div>
+
+
+<!-- NIGHT SECTION -->
+<div id="nightSection" class="hidden">
+
+<label class="block font-medium mb-1">
+Night Shifts Worked
+</label>
+
+<input type="number" id="nightShiftDays"
+class="w-full p-2 border rounded-lg bg-sky-100">
+
+</div>
+
+
+<!-- SATURDAY SECTION -->
+<div id="saturdaySection" class="hidden space-y-2">
+
+<label class="block font-medium mb-1">
+Saturdays Taken Off
+</label>
+
+<select id="saturdayOff"
+class="w-full p-2 border rounded-lg bg-sky-100">
+
+<option>0</option>
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+
+</select>
+
+<div class="flex gap-2 items-center">
+
+<input type="checkbox" id="fiveSaturdays"
+class="w-5 h-5">
+
+<label class="font-medium">
+Month has 5 Saturdays
+</label>
+
+</div>
+
+</div>
+
+
+<!-- BUTTON -->
+<button onclick="calculateSalary()"
+class="w-full bg-blue-600 text-white py-2 rounded-lg
+hover:bg-blue-700 transition">
+
+Calculate
+
+</button>
+
+</div>
+</div>
+
+
+<!-- RESULT SECTION -->
+<div class="border rounded-xl p-6 bg-gray-50">
+
+<h2 class="text-xl font-semibold mb-6 text-green-700">
+Calculated Allowances
+</h2>
+
+<div class="space-y-4">
+
+<div class="flex justify-between border-b pb-2">
+<span>Night Allowance</span>
+<span id="nightAllowance">0.00</span>
+</div>
+
+<div class="flex justify-between border-b pb-2">
+<span>After Night</span>
+<span id="finalAfterNight">0.00</span>
+</div>
+
+<div class="flex justify-between border-b pb-2">
+<span>Saturday Allowance</span>
+<span id="saturdayAllowance">0.00</span>
+</div>
+
+<div class="flex justify-between border-b pb-2">
+<span>Festival / Sunday</span>
+<span id="festivalAllowance">0.00</span>
+</div>
+
+<div class="flex justify-between border-b pb-2 text-red-600">
+<span>PT</span>
+<span>200.00</span>
+</div>
+
+<div class="flex justify-between pt-4 text-lg font-bold">
+<span>Net Salary (Approx.)</span>
+<span id="totalAmount"
+class="text-blue-700">0.00</span>
+</div>
+
+<p class="text-sm  text-gray-500 mt-3 text-center italic">
+Note: The calculated amount is approximate and may vary by ₹0 to ₹15
+due to rounding and internal payroll adjustments.
+</p>
+
+</div>
+</div>
+
+</div>
+</div>
+
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+/* ELEMENTS */
+
+const nightSection = document.getElementById("nightSection");
+const saturdaySection = document.getElementById("saturdaySection");
+
+const fullSalary = document.getElementById("fullSalary");
+const daysInMonth = document.getElementById("daysInMonth");
+const lopDays = document.getElementById("lopDays");
+const sundayDays = document.getElementById("sundayDays");
+const nightShiftDays = document.getElementById("nightShiftDays");
+const saturdayOff = document.getElementById("saturdayOff");
+
+const nightApplicable = document.getElementById("nightApplicable");
+const saturdayApplicable = document.getElementById("saturdayApplicable");
+const fiveSaturdays = document.getElementById("fiveSaturdays");
+
+
+/* SHOW / HIDE */
+
+function toggleNight() {
+  nightSection.classList.toggle("hidden", !nightApplicable.checked);
+}
+
+function toggleSaturday() {
+  saturdaySection.classList.toggle("hidden", !saturdayApplicable.checked);
+}
+
+
+/* CELEBRATION */
+
+function showCelebration() {
+
+  const centerX = window.innerWidth / 2;
+  const bottomY = window.innerHeight - 20;
+
+  for (let i = 0; i < 120; i++) {
+
+    const spark = document.createElement("div");
+
+    spark.classList.add("confetti");
+
+    // Start from bottom-center
+    spark.style.left = centerX + "px";
+    spark.style.top = bottomY + "px";
+
+    // Random blast direction
+    const angle = Math.random() * 2 * Math.PI;
+    const distance = Math.random() * 450 + 100;
+
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance * -1;
+
+    spark.style.setProperty("--x", x + "px");
+    spark.style.setProperty("--y", y + "px");
+
+    spark.style.backgroundColor =
+      `hsl(${Math.random() * 360},100%,60%)`;
+
+    spark.style.animation = "blast 2s ease-out forwards";
+
+    document.body.appendChild(spark);
+
+    setTimeout(() => {
+      spark.remove();
+    }, 2000);
+  }
+}
+
+
+
+/* MAIN CALCULATION */
+
+function calculateSalary() {
+
+  const salary = Number(fullSalary.value) || 0;
+  const days = Number(daysInMonth.value) || 0;
+  const lop = Number(lopDays.value) || 0;
+  const sunday = Number(sundayDays.value) || 0;
+  const night = Number(nightShiftDays.value) || 0;
+  const satOff = Number(saturdayOff.value) || 0;
+
+  const nightOn = nightApplicable.checked;
+  const satOn = saturdayApplicable.checked;
+  const fiveSat = fiveSaturdays.checked;
+
+  const PT = 200;
+
+  if (!days || salary <= 0) {
+    alert("Please enter salary and days properly");
+    return;
+  }
+
+  /* ===== AFTER LOP ===== */
+
+  const perDayBase = salary / days;
+  const lopDeduct = perDayBase * lop;
+
+  let afterLOP = salary - lopDeduct;
+
+  if (afterLOP < 0) afterLOP = 0;
+
+
+  /* ===== NIGHT ===== */
+
+  let nightAllowance = 0;
+  let afterNight = afterLOP;
+
+  if (nightOn && night > 0) {
+
+    let pct = night / days;
+
+    nightAllowance = afterLOP * pct * 0.20;
+
+    afterNight += nightAllowance;
+  }
+
+
+  /* ===== SUNDAY (FROM AFTER NIGHT) ===== */
+
+  let sundayAmount = 0;
+
+  if (sunday > 0) {
+
+    const perDayAfterNight = afterNight / days;
+
+    sundayAmount = perDayAfterNight * sunday;
+  }
+
+  sundayAmount = Math.round(sundayAmount);
+
+
+  /* ===== SATURDAY (ON AFTER NIGHT) ===== */
+
+  let satAllowance = 0;
+  let afterSaturday = afterNight;
+
+  if (satOn) {
+
+    const totalSaturdays = fiveSat ? 5 : 4;
+
+    const base = 0.20; // 20%
+
+    const perSatCut = base / totalSaturdays;
+
+    let pct = base - (satOff * perSatCut);
+
+    if (pct < 0) pct = 0;
+
+    satAllowance = afterNight * pct;
+
+    afterSaturday += satAllowance;
+  }
+
+
+  /* ===== FINAL TOTAL ===== */
+
+  let total =
+    afterSaturday +
+    sundayAmount -
+    PT;
+
+  if (total < 0) total = 0;
+
+  total = Math.round(total);
+
+
+  /* ===== CELEBRATION ===== */
+
+  if (total >= 100000) {
+    showCelebration();
+  }
+
+
+  /* ===== DISPLAY ===== */
+
+  document.getElementById("nightAllowance").innerText =
+    nightAllowance.toFixed(2);
+
+  document.getElementById("finalAfterNight").innerText =
+    afterNight.toFixed(2);
+
+  document.getElementById("saturdayAllowance").innerText =
+    satAllowance.toFixed(2);
+
+  document.getElementById("festivalAllowance").innerText =
+    sundayAmount.toFixed(2);
+
+  document.getElementById("totalAmount").innerText =
+    total.toFixed(2);
+}
+
+
+/* BLOCK INSPECT */
+
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+document.addEventListener("keydown", e => {
+
+  if (e.keyCode === 123) e.preventDefault();
+
+  if (
+    (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+    (e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
+    (e.ctrlKey && e.keyCode === 85)
+  ) {
+    e.preventDefault();
+  }
+
+});
+
+</script>
+
+
+
+<!-- SIGNATURE -->
+
+<div class="fixed bottom-3 right-4 select-none pointer-events-none">
+
+<span class="text-lg font-semibold tracking-wide
+text-transparent bg-clip-text
+bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500
+drop-shadow-md italic">
+
+— Arun Gajjar
+
+</span>
+
+</div>
+
+</body>
+</html>
