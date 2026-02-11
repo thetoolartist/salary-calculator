@@ -33,8 +33,6 @@
 }
 
 </style>
-
-
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
@@ -101,7 +99,7 @@ class="w-full p-2 border rounded-lg bg-sky-100">
 <!-- Sunday -->
 <div>
 <label class="block font-medium mb-1">
-Enter Sunday / Holiday Worked
+Enter Days Worked (Sunday/Holiday)
 </label>
 
 <input type="number" id="sundayDays"
@@ -122,6 +120,15 @@ Night Shift Applicable
 </div>
 
 <div class="flex gap-2 items-center">
+<input type="checkbox" id="otherShiftApplicable"
+class="w-5 h-5" onchange="toggleNight()">
+
+<label class="font-medium">
+Other Shift Applicable
+</label>
+</div>
+
+<div class="flex gap-2 items-center">
 <input type="checkbox" id="saturdayApplicable"
 class="w-5 h-5" onchange="toggleSaturday()">
 
@@ -133,11 +140,11 @@ Saturday Allowance Applicable
 </div>
 
 
-<!-- NIGHT SECTION -->
+<!-- NIGHT / OTHER SECTION -->
 <div id="nightSection" class="hidden">
 
 <label class="block font-medium mb-1">
-Night Shifts Worked
+Days Worked (Night/Other Shifts)
 </label>
 
 <input type="number" id="nightShiftDays"
@@ -150,7 +157,7 @@ class="w-full p-2 border rounded-lg bg-sky-100">
 <div id="saturdaySection" class="hidden space-y-2">
 
 <label class="block font-medium mb-1">
-Saturdays Taken Off
+Saturday Leave Taken
 </label>
 
 <select id="saturdayOff"
@@ -207,6 +214,11 @@ Calculated Allowances
 </div>
 
 <div class="flex justify-between border-b pb-2">
+<span>Other Shift Allowance</span>
+<span id="otherAllowance">0.00</span>
+</div>
+
+<div class="flex justify-between border-b pb-2">
 <span>After Night</span>
 <span id="finalAfterNight">0.00</span>
 </div>
@@ -232,7 +244,7 @@ Calculated Allowances
 class="text-blue-700">0.00</span>
 </div>
 
-<p class="text-sm  text-gray-500 mt-3 text-center italic">
+<p class="text-sm text-gray-500 mt-3 text-center italic">
 Note: The calculated amount is approximate and may vary by ₹0 to ₹15
 due to rounding and internal payroll adjustments.
 </p>
@@ -244,11 +256,9 @@ due to rounding and internal payroll adjustments.
 </div>
 
 
-<!-- ================= SCRIPT ================= -->
+<!-- SCRIPT -->
 
 <script>
-
-/* ELEMENTS */
 
 const nightSection = document.getElementById("nightSection");
 const saturdaySection = document.getElementById("saturdaySection");
@@ -261,14 +271,19 @@ const nightShiftDays = document.getElementById("nightShiftDays");
 const saturdayOff = document.getElementById("saturdayOff");
 
 const nightApplicable = document.getElementById("nightApplicable");
+const otherShiftApplicable = document.getElementById("otherShiftApplicable");
 const saturdayApplicable = document.getElementById("saturdayApplicable");
 const fiveSaturdays = document.getElementById("fiveSaturdays");
 
 
-/* SHOW / HIDE */
-
 function toggleNight() {
-  nightSection.classList.toggle("hidden", !nightApplicable.checked);
+
+  if (nightApplicable.checked || otherShiftApplicable.checked) {
+    nightSection.classList.remove("hidden");
+  } else {
+    nightSection.classList.add("hidden");
+  }
+
 }
 
 function toggleSaturday() {
@@ -276,7 +291,7 @@ function toggleSaturday() {
 }
 
 
-/* CELEBRATION */
+/* CONFETTI */
 
 function showCelebration() {
 
@@ -289,11 +304,9 @@ function showCelebration() {
 
     spark.classList.add("confetti");
 
-    // Start from bottom-center
     spark.style.left = centerX + "px";
     spark.style.top = bottomY + "px";
 
-    // Random blast direction
     const angle = Math.random() * 2 * Math.PI;
     const distance = Math.random() * 450 + 100;
 
@@ -317,8 +330,7 @@ function showCelebration() {
 }
 
 
-
-/* MAIN CALCULATION */
+/* MAIN CALC */
 
 function calculateSalary() {
 
@@ -330,6 +342,7 @@ function calculateSalary() {
   const satOff = Number(saturdayOff.value) || 0;
 
   const nightOn = nightApplicable.checked;
+  const otherOn = otherShiftApplicable.checked;
   const satOn = saturdayApplicable.checked;
   const fiveSat = fiveSaturdays.checked;
 
@@ -340,7 +353,8 @@ function calculateSalary() {
     return;
   }
 
-  /* ===== AFTER LOP ===== */
+
+  /* AFTER LOP */
 
   const perDayBase = salary / days;
   const lopDeduct = perDayBase * lop;
@@ -350,14 +364,14 @@ function calculateSalary() {
   if (afterLOP < 0) afterLOP = 0;
 
 
-  /* ===== NIGHT ===== */
+  /* NIGHT */
 
   let nightAllowance = 0;
   let afterNight = afterLOP;
 
   if (nightOn && night > 0) {
 
-    let pct = night / days;
+    const pct = night / days;
 
     nightAllowance = afterLOP * pct * 0.20;
 
@@ -365,30 +379,45 @@ function calculateSalary() {
   }
 
 
-  /* ===== SUNDAY (FROM AFTER NIGHT) ===== */
+  /* OTHER SHIFT */
+
+  let otherAllowance = 0;
+  let afterOther = afterNight;
+
+  if (otherOn && night > 0) {
+
+    const pct = night / days;
+
+    otherAllowance = afterNight * pct * 0.07;
+
+    afterOther += otherAllowance;
+  }
+
+
+  /* SUNDAY */
 
   let sundayAmount = 0;
 
   if (sunday > 0) {
 
-    const perDayAfterNight = afterNight / days;
+    const perDayAfter = afterOther / days;
 
-    sundayAmount = perDayAfterNight * sunday;
+    sundayAmount = perDayAfter * sunday;
   }
 
   sundayAmount = Math.round(sundayAmount);
 
 
-  /* ===== SATURDAY (ON AFTER NIGHT) ===== */
+  /* SATURDAY */
 
   let satAllowance = 0;
-  let afterSaturday = afterNight;
+  let afterSaturday = afterOther;
 
   if (satOn) {
 
     const totalSaturdays = fiveSat ? 5 : 4;
 
-    const base = 0.20; // 20%
+    const base = 0.20;
 
     const perSatCut = base / totalSaturdays;
 
@@ -396,13 +425,13 @@ function calculateSalary() {
 
     if (pct < 0) pct = 0;
 
-    satAllowance = afterNight * pct;
+    satAllowance = afterOther * pct;
 
     afterSaturday += satAllowance;
   }
 
 
-  /* ===== FINAL TOTAL ===== */
+  /* FINAL */
 
   let total =
     afterSaturday +
@@ -414,20 +443,21 @@ function calculateSalary() {
   total = Math.round(total);
 
 
-  /* ===== CELEBRATION ===== */
-
   if (total >= 100000) {
     showCelebration();
   }
 
 
-  /* ===== DISPLAY ===== */
+  /* DISPLAY */
 
   document.getElementById("nightAllowance").innerText =
     nightAllowance.toFixed(2);
 
+  document.getElementById("otherAllowance").innerText =
+    otherAllowance.toFixed(2);
+
   document.getElementById("finalAfterNight").innerText =
-    afterNight.toFixed(2);
+    afterOther.toFixed(2);
 
   document.getElementById("saturdayAllowance").innerText =
     satAllowance.toFixed(2);
@@ -459,7 +489,6 @@ document.addEventListener("keydown", e => {
 });
 
 </script>
-
 
 
 <!-- SIGNATURE -->
